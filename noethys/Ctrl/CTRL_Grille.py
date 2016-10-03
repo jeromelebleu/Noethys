@@ -2411,33 +2411,31 @@ class CTRL(gridlib.Grid, glr.GridWithLabelRenderersMixin):
                     IDprestationForfait, dictTarifForfait = self.RechercheForfaitCredit(IDtarif=dictTarif["IDtarif"], date=date, IDfamille=IDfamille, IDindividu=IDindividu)
                     
                     # Vérification des quantités max
-##                    if len(dictTarif["quantitesMax"]) > 0 :
-##                        combiRetenue = list(dictTarif["combi_retenue"])
-##                        combiRetenue.sort() 
-##                        quantite_max = None
-##                        for dictQuantitesMax in dictTarif["quantitesMax"] :
-##                            quantite_max_temp = dictQuantitesMax["quantite_max"]
-##                            combiUnite = dictQuantitesMax["listeUnites"]
-##                            combiUnite.sort() 
-##                            if combiUnite == combiRetenue :
-##                                quantite_max = quantite_max_temp
-##                        
-##                        if quantite_max != None :
-##                            # Recherche les autres conso existantes avec cette combi
-##                            print "quantite_max=", quantite_max
-##                            print "beneficiaire=", dictTarif["forfait_beneficiaire"]
-##                            dictVerificationQuantites = {} 
-##                            for dateTemp, dictUnitesTemp in self.dictConsoIndividus[IDindividu].iteritems():
-##                                for IDuniteTemp, listeConso in dictUnitesTemp.iteritems() :
-##                                    for conso in listeConso :
-##                                        if conso.IDactivite == IDactivite and conso.etat in ("reservation", "present", "absenti") :
-##                                            print conso.IDfamille
-                            
-                            
-                            
-                            
-                            
-                            
+                    if dictTarif["quantitesMax"]:
+                        combiRetenue = list(dictTarif["combi_retenue"])
+                        combiRetenue.sort()
+                        quantite_max = None
+                        for dictQuantitesMax in dictTarif["quantitesMax"]:
+                            quantite_max_temp = dictQuantitesMax["quantite_max"]
+                            combiUnite = dictQuantitesMax["listeUnites"]
+                            combiUnite.sort()
+                            if combiUnite == combiRetenue:
+                                quantite_max = quantite_max_temp
+                                break
+
+                        if quantite_max is not None:
+                            counter = 0
+                            # Recherche les autres conso existantes avec cette combi
+                            for dateTemp, dictUnitesTemp in self.dictConsoIndividus[IDindividu].iteritems():
+                                for IDuniteTemp, listeConso in dictUnitesTemp.iteritems() :
+                                    for conso in listeConso :
+                                        if (conso.IDactivite == IDactivite and
+                                                conso.IDprestation == IDprestationForfait and
+                                                conso.etat in ("reservation", "present", "absent")):
+                                            counter += 1
+                                            if counter > quantite_max:
+                                                IDprestationForfait = None
+                                                break
 
                     if IDprestationForfait != None :
                         dictTarif["CREDIT"] = IDprestationForfait
@@ -2893,7 +2891,7 @@ class CTRL(gridlib.Grid, glr.GridWithLabelRenderersMixin):
             # Vérifie si l'état est valide
             if dictTarif["type"] == "JOURN" :
                 etats = dictTarif["etats"]
-                etat = dictUnitesUtilisees[IDunite_combi]
+                etat = dictUnitesUtilisees.get(IDunite_combi)
                 if etat not in etats :
                     return False
         return True
